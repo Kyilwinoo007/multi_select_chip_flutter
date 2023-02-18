@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_state_manager/src/simple/get_controllers.dart';
+import 'package:provider/provider.dart';
 
 void main() {
   runApp(MyApp());
@@ -9,24 +10,27 @@ void main() {
 
 class MyApp extends StatelessWidget {
   MyApp({super.key});
-
-  // This widget is the root of your application.
-
-  GlobalKey key = GlobalKey();
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          create: (context) => ChipProvider(),
+        ),
+      ],
+      child: MaterialApp(
+        title: 'Flutter Demo',
+        theme: ThemeData(
+          primarySwatch: Colors.blue,
+        ),
+        home: MyHomePage(key: key, title: 'Flutter Demo Home Page'),
       ),
-      home: MyHomePage(key: key, title: 'Flutter Demo Home Page'),
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({key, required this.title});
+  const MyHomePage({super.key, required this.title});
 
   final String title;
 
@@ -52,73 +56,71 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    Get.put(ChipController());
-    return GetBuilder(builder: (ChipController controller) {
-      return Scaffold(
-        appBar: AppBar(
-          title: Text(widget.title),
+    final chipProvider = Provider.of<ChipProvider>(context);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(widget.title),
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            const Text('Select A value'),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: chipProvider.lstType
+                  .map((text) => ChoiceChip(
+                        selected: chipProvider.selectedChipAData == text,
+                        label: Text(text,
+                            style: const TextStyle(color: Colors.white)),
+                        elevation: 3,
+                        pressElevation: 5,
+                        backgroundColor: Colors.grey[400],
+                        selectedColor: Colors.lightGreen,
+                        onSelected: (bool selected) {
+                          if (selected) {
+                            chipProvider.setSelectedData(text);
+                          }
+                        },
+                      ))
+                  .toList(),
+            ),
+            const Text('Select B value'),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: chipProvider.lstLanguage
+                  .map((text) => ChoiceChip(
+                        selected: chipProvider.selectedChipBData == text,
+                        label: Text(text,
+                            style: const TextStyle(color: Colors.white)),
+                        elevation: 3,
+                        pressElevation: 5,
+                        backgroundColor: Colors.grey[400],
+                        selectedColor: Colors.lightGreen,
+                        onSelected: (bool selected) {
+                          if (selected) {
+                            chipProvider.setSelectedChipBData(text);
+                          }
+                        },
+                      ))
+                  .toList(),
+            ),
+            ElevatedButton(
+              child: const Text('Pass selected A and B values to next screen'),
+              onPressed: () {
+                print(chipProvider.selectedChipAData);
+                print(chipProvider.selectedChipBData);
+              },
+            ),
+          ],
         ),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              const Text('Select A value'),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: controller.lstType
-                    .map((text) => ChoiceChip(
-                          selected: controller.selectedChipAData == text,
-                          label: Text(text,
-                              style: const TextStyle(color: Colors.white)),
-                          elevation: 3,
-                          pressElevation: 5,
-                          backgroundColor: Colors.grey[400],
-                          selectedColor: Colors.lightGreen,
-                          onSelected: (bool selected) {
-                            if (selected) {
-                              controller.setSelectedData(text);
-                            }
-                          },
-                        ))
-                    .toList(),
-              ),
-              const Text('Select B value'),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: controller.lstLanguage
-                    .map((text) => ChoiceChip(
-                          selected: controller.selectedChipBData == text,
-                          label: Text(text,
-                              style: const TextStyle(color: Colors.white)),
-                          elevation: 3,
-                          pressElevation: 5,
-                          backgroundColor: Colors.grey[400],
-                          selectedColor: Colors.lightGreen,
-                          onSelected: (bool selected) {
-                            if (selected) {
-                              controller.setSelectedChipBData(text);
-                            }
-                          },
-                        ))
-                    .toList(),
-              ),
-              ElevatedButton(
-                child:
-                    const Text('Pass selected A and B values to next screen'),
-                onPressed: () {
-                  print(controller.selectedChipAData);
-                  print(controller.selectedChipBData);
-                },
-              ),
-            ],
-          ),
-        ),
-      );
-    });
+      ),
+    );
   }
 }
 
-class ChipController extends GetxController {
+class ChipProvider extends ChangeNotifier {
   String? selectedChipAData;
   String? selectedChipBData;
   List<String> lstType = [
@@ -132,11 +134,11 @@ class ChipController extends GetxController {
   ];
   void setSelectedData(String data) {
     selectedChipAData = data;
-    update();
+    notifyListeners();
   }
 
   void setSelectedChipBData(String data) {
     selectedChipBData = data;
-    update();
+    notifyListeners();
   }
 }
